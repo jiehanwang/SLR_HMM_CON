@@ -51,10 +51,10 @@
     <ClInclude Include="S_FeaExtraction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IsolateHMM.h">
+    <ClInclude Include="HandSegment_HMM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HandSegment_HMM.h">
+    <ClInclude Include="ContinuousHMM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -83,13 +83,13 @@
     <ClCompile Include="S_FeaExtraction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IsolateHMM.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="HandSegment_HMM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SLR_HMM_CON.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ContinuousHMM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

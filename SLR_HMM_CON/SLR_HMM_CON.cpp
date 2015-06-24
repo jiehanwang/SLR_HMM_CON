@@ -2,7 +2,7 @@
 //
 
 #include "stdafx.h"
-#include "IsolateHMM.h"
+#include "ContinuousHMM.h"
 #include "Readvideo.h"
 using namespace std;
 
@@ -10,7 +10,7 @@ using namespace std;
 int _tmain(int argc, _TCHAR* argv[])
 {
 
-	IsolateHMM myMatching;
+	ContinuousHMM myMatching;
 
 	//Read videos.
 	bool fileFindFlag;
@@ -36,12 +36,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		int frameSize = myReadVideo.vColorData.size();
 		cout<<"Total frameSize "<<frameSize<<endl;
 
-			//Recognize
-// 		myMatching.patchRun(myReadVideo.vSkeletonData, 
-// 			myReadVideo.vDepthData,
-// 			myReadVideo.vColorData,
-// 			resWord);
-		//vector<int> rankIndex;
 		int rankIndex[100];
 		int rankLength = 0;
 
@@ -56,12 +50,8 @@ int _tmain(int argc, _TCHAR* argv[])
 				cout<<rankIndex[j]<<" ";
 			}
  			cout<<endl;
-			//cout<<resWord<<endl;
 		}
 
-		
-		//Show the result
-		//cout<<"-----"<<resWord<<endl;
 		myMatching.patchRun_release();
 	}
 

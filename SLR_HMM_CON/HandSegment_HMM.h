@@ -80,7 +80,7 @@ public:
 	/// @return IplImage* hand posture
 	////////////////////////////////////////////////////////////////////////////
 	IplImage* kickOneHand(IplImage *rgbImg, Mat mDepth, CvPoint point, CRect& rect, int flag, CvPoint& outPoint,LONGLONG timeStamp, bool bVideo);
-
+	IplImage* kickOneHandAll_whj(IplImage* img, Mat depthMat, CvPoint point,CvRect &HandRegion);
 	//////////////////////////////////////////////////////////////////////////
 	/// @brief get hand posture by depth and color data to choose word
 	/// @param[in] rgbImg original color image

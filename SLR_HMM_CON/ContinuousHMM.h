@@ -7,11 +7,11 @@
 using namespace std;
 using namespace cv;
 
-class IsolateHMM
+class ContinuousHMM
 {
 public:
-	IsolateHMM(void);
-	~IsolateHMM(void);
+	ContinuousHMM(void);
+	~ContinuousHMM(void);
 
 public:
 	CHMM* m_pDhmm_test;

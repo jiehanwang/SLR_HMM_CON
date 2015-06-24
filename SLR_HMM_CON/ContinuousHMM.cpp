@@ -1,8 +1,8 @@
 #include "StdAfx.h"
-#include "IsolateHMM.h"
+#include "ContinuousHMM.h"
 
 
-IsolateHMM::IsolateHMM(void)
+ContinuousHMM::ContinuousHMM(void)
 {
 	m_pDhmm_test = new CHMM;
 	ReadGallery("..\\model\\HmmData.dat");
@@ -17,18 +17,18 @@ IsolateHMM::IsolateHMM(void)
 }
 
 
-IsolateHMM::~IsolateHMM(void)
+ContinuousHMM::~ContinuousHMM(void)
 {
 }
 
 
-void IsolateHMM::loadModel(CString path)
+void ContinuousHMM::loadModel(CString path)
 {
 	m_pDhmm_test->Init(path);
 }
 
 
-void IsolateHMM::run(double **feature, int frameNum, char* result)
+void ContinuousHMM::run(double **feature, int frameNum, char* result)
 {
 	//m_pRecog->GetHmmModel(m_pDhmm_test);
 	//double* pCadidateProb = new double [m_pRecog->m_pDhmm->m_nTotalHmmWord];
@@ -62,12 +62,12 @@ void IsolateHMM::run(double **feature, int frameNum, char* result)
 // 	}
 }
 
-bool IsolateHMM::comp2(scoreAndIndex dis_1, scoreAndIndex dis_2)
+bool ContinuousHMM::comp2(scoreAndIndex dis_1, scoreAndIndex dis_2)
 {
 	return dis_1.score > dis_2.score;
 }
 
-void IsolateHMM::frameSelect_inMatch(int heightLimit, int leftY, int rightY)
+void ContinuousHMM::frameSelect_inMatch(int heightLimit, int leftY, int rightY)
 {
 	int heightThisLimit = min(leftY,rightY);
 	if (heightThisLimit < heightLimit)
@@ -82,7 +82,7 @@ void IsolateHMM::frameSelect_inMatch(int heightLimit, int leftY, int rightY)
 }
 
 
-void IsolateHMM::readIndata(SLR_ST_Skeleton skeletonCurrent, Mat depthCurrent, IplImage* frameCurrent,int framID)
+void ContinuousHMM::readIndata(SLR_ST_Skeleton skeletonCurrent, Mat depthCurrent, IplImage* frameCurrent,int framID)
 {
 	if (framID == 0)
 	{
@@ -126,7 +126,7 @@ void IsolateHMM::readIndata(SLR_ST_Skeleton skeletonCurrent, Mat depthCurrent, I
 }
 
 
-void IsolateHMM::recognize(char* result)
+void ContinuousHMM::recognize(char* result)
 {
 	myFeaExtraction.postureFeature(vPosture,handSegmentVideo);
 	myFeaExtraction.SPFeature(vSkeleton);
@@ -151,7 +151,7 @@ void IsolateHMM::recognize(char* result)
 }
 
 
-void IsolateHMM::patchRun(vector<SLR_ST_Skeleton> vSkeletonData, vector<Mat> vDepthData, vector<IplImage*> vColorData, 
+void ContinuousHMM::patchRun(vector<SLR_ST_Skeleton> vSkeletonData, vector<Mat> vDepthData, vector<IplImage*> vColorData, 
 	char* resWord)
 {
 	SLR_ST_Skeleton skeletonCurrent;    //The 3 current data.
@@ -185,7 +185,8 @@ void IsolateHMM::patchRun(vector<SLR_ST_Skeleton> vSkeletonData, vector<Mat> vDe
 	recognize(resWord);
 
 }
-void IsolateHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDepthData, 
+
+void ContinuousHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDepthData, 
 	IplImage* vColorData,int framID, int rankIndex[], int &rankLength)
 {
 	readIndata(vSkeletonData, vDepthData, vColorData, framID);
@@ -239,20 +240,20 @@ void IsolateHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDepthDa
 
 }
 
-void IsolateHMM::ReadGallery(CString path)
+void ContinuousHMM::ReadGallery(CString path)
 {
 	modelPath = path;
 	loadModel(modelPath);
 }
 
 
-void IsolateHMM::patchRun_release(void)
+void ContinuousHMM::patchRun_release(void)
 {
 	m_pRecog->continuous_release();
 }
 
 
-void IsolateHMM::patchRun_initial(void)
+void ContinuousHMM::patchRun_initial(void)
 {
 	m_pRecog->continuous_initial();
 	resWord[0] = 0;

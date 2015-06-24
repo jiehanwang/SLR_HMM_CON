@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SLR_HMM_ISO", "SLR_HMM_ISO\SLR_HMM_ISO.vcxproj", "{6B0D5B5F-64FB-49D4-A04B-EB4B1A522353}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SLR_HMM_CON", "SLR_HMM_CON\SLR_HMM_CON.vcxproj", "{6B0D5B5F-64FB-49D4-A04B-EB4B1A522353}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -85,7 +85,7 @@
     <ClInclude Include="HandSegment_HMM.h" />
     <ClInclude Include="Hmm.h" />
     <ClInclude Include="HmmStruct.h" />
-    <ClInclude Include="IsolateHMM.h" />
+    <ClInclude Include="ContinuousHMM.h" />
     <ClInclude Include="MyInclude.h" />
     <ClInclude Include="Readvideo.h" />
     <ClInclude Include="Recognition.h" />
@@ -99,7 +99,7 @@
     <ClCompile Include="HandSegment_HMM.cpp" />
     <ClCompile Include="Hmm.cpp" />
     <ClCompile Include="HmmStruct.cpp" />
-    <ClCompile Include="IsolateHMM.cpp" />
+    <ClCompile Include="ContinuousHMM.cpp" />
     <ClCompile Include="MyInclude.cpp" />
     <ClCompile Include="Readvideo.cpp" />
     <ClCompile Include="Recognition.cpp" />
