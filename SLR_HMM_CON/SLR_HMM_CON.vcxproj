@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6B0D5B5F-64FB-49D4-A04B-EB4B1A522353}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>SLR_HMM_ISO</RootNamespace>
+    <RootNamespace>SLR_HMM_CON</RootNamespace>
     <ProjectName>SLR_HMM_CON</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

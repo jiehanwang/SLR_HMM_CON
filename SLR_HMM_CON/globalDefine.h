@@ -72,3 +72,6 @@ struct ColorModel
 	ColorModel():mean_cr(0),mean_cb(0),d_cr(0),d_cb(0){};
 };
 //////////////////////////////////////////////////////////////////////////
+//add after 2015-08-19
+const bool skinHandseg = true;  //true: handSeg. false: noHandSeg
+const bool saveTempImages = true;

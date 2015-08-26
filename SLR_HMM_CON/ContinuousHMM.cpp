@@ -5,15 +5,21 @@
 ContinuousHMM::ContinuousHMM(void)
 {
 	m_pDhmm_test = new CHMM;
-	ReadGallery("..\\model\\HmmData.dat");
+
+	if (skinHandseg)
+	{
+		ReadGallery("..\\model\\HmmData_signFromSentence_370sign_withoutP0805.dat");
+	}
+	else
+	{
+		ReadGallery("..\\model\\HmmData_signFromSentence_370sign_withoutP0805.dat");
+	}
+	
 	m_pRecog = new CRecognition;
 	m_pRecog->GetHmmModel(m_pDhmm_test);
-	
-
 
 	handSegmentVideo.init();
 	usefulFrameSize = 0;
-	
 }
 
 
@@ -118,11 +124,71 @@ void ContinuousHMM::readIndata(SLR_ST_Skeleton skeletonCurrent, Mat depthCurrent
 		CvRect leftHand;
 		CvRect rightHand;
 
+		//Feature extracted from RGB
 		handSegmentVideo.kickHandsAll(frameCurrent,depthCurrent
-		,lPoint2,rPoint2,posture,leftHand,rightHand);
+			,lPoint2,rPoint2,posture,leftHand,rightHand);
+
+		//Feature extracted from Depth
+// 		Mat tempMat = retrieveGrayDepth(depthCurrent);
+// 		IplImage depthGray = IplImage(tempMat);
+// 		handSegmentVideo.kickHandsAll(&depthGray,depthCurrent
+// 			,lPoint2,rPoint2,posture,leftHand,rightHand);
+
+		if (saveTempImages)
+		{
+			CString outputName;
+			outputName.Format("..\\output\\%03d_left.jpg", framID);
+			cvSaveImage(outputName, posture.leftHandImg);
+			outputName.Format("..\\output\\%03d_right.jpg", framID);
+			cvSaveImage(outputName, posture.rightHandImg);
+		}
+		
 
 		vPosture.push_back(posture);
 	}
+}
+
+Mat ContinuousHMM::retrieveGrayDepth(Mat depthMat)
+{
+	double maxDisp = -1.f;
+	float S = 1.f;
+	float V = 1.f;
+	Mat disp;
+	disp.create( Size(640,480), CV_32FC1);
+	disp = cv::Scalar::all(0);
+	for( int y = 0; y < disp.rows; y++ )
+	{
+		for( int x = 0; x < disp.cols; x++ )
+		{
+			unsigned short curDepth = depthMat.at<unsigned short>(y,x);
+			if( curDepth != 0 )
+				disp.at<float>(y,x) = (75.0 * 757) / curDepth;
+		}
+	}
+	Mat gray;
+	disp.convertTo( gray, CV_8UC1 );
+	if( maxDisp <= 0 )
+	{
+		maxDisp = 0;
+		minMaxLoc( gray, 0, &maxDisp );
+	}
+	Mat _depthColorImage;
+	_depthColorImage.create( gray.size(), CV_8UC3 );
+	_depthColorImage = Scalar::all(0);
+	for( int y = 0; y < gray.rows; y++ )
+	{
+		for( int x = 0; x < gray.cols; x++ )
+		{
+			uchar d = gray.at<uchar>(y,x);
+			if (d == 0)
+				continue;
+
+			unsigned int H = ((uchar)maxDisp - d) * 240 / (uchar)maxDisp;
+
+			_depthColorImage.at<Point3_<uchar> >(y,x) = Point3_<uchar>(H, H, H);     
+		}
+	}
+	return _depthColorImage;
 }
 
 
@@ -186,16 +252,39 @@ void ContinuousHMM::patchRun(vector<SLR_ST_Skeleton> vSkeletonData, vector<Mat> 
 
 }
 
-void ContinuousHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDepthData, 
-	IplImage* vColorData,int framID, int rankIndex[], int &rankLength)
+void ContinuousHMM::patchRun_continuous_offline(vector<SLR_ST_Skeleton> vSkeletonData, vector<Mat> vDepthData, 
+	vector<IplImage*> vColorData,int frameNum, char* result)
 {
-	readIndata(vSkeletonData, vDepthData, vColorData, framID);
+	//Read in data of one frame to this class
+	for (int i=0; i<frameNum; i++)
+	{
+		readIndata(vSkeletonData[i], vDepthData[i], vColorData[i], i);
+	}
+	
+	//Compute the feature. The size of the frame is only 1.
 	myFeaExtraction.postureFeature(vPosture,handSegmentVideo);
 	myFeaExtraction.SPFeature(vSkeleton);
 	myFeaExtraction.PostureSP();
 
-	//cout<<myFeaExtraction.frameNum<<endl;
+	m_pRecog->ContinueTestOneSen_Whj(myFeaExtraction.feature, frameNum, result);
 
+	//release
+	vPosture.clear();
+	vSkeleton.clear();
+	frameSelect.clear();
+
+}
+void ContinuousHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDepthData, 
+	IplImage* vColorData,int framID, int rankIndex[], int &rankLength)
+{
+	//Read in data of one frame to this class
+	readIndata(vSkeletonData, vDepthData, vColorData, framID);
+	//Compute the feature. The size of the frame is only 1.
+	myFeaExtraction.postureFeature(vPosture,handSegmentVideo);
+	myFeaExtraction.SPFeature(vSkeleton);
+	myFeaExtraction.PostureSP();
+
+	//Recognize the frame
 	m_pRecog->continuous_loop(myFeaExtraction.feature[0], framID, resWord);
 
 	CString str(resWord);

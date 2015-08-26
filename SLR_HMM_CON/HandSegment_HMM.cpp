@@ -140,13 +140,16 @@ void CHandSegment_HMM::kickHandsAll(IplImage* rgbImg, Mat mDepth, CvPoint leftPo
 	IplImage *leftOutputImg = NULL;
 	IplImage *rightOutputImg = NULL;
 
-
-// 	leftOutputImg =  kickOneHandAll(rgbImg,mDepth,leftPoint,leftHand);
-// 	rightOutputImg = kickOneHandAll(rgbImg,mDepth,rightPoint,rightHand);
-
-	leftOutputImg =  kickOneHandAll_whj(rgbImg,mDepth,leftPoint,leftHand);
-	rightOutputImg = kickOneHandAll_whj(rgbImg,mDepth,rightPoint,rightHand);
-
+	if (skinHandseg)
+	{
+		leftOutputImg =  kickOneHandAll(rgbImg,mDepth,leftPoint,leftHand);
+		rightOutputImg = kickOneHandAll(rgbImg,mDepth,rightPoint,rightHand);
+	}
+	else
+	{
+		leftOutputImg =  kickOneHandAll_whj(rgbImg,mDepth,leftPoint,leftHand);
+		rightOutputImg = kickOneHandAll_whj(rgbImg,mDepth,rightPoint,rightHand);
+	}
 
 	if( leftOutputImg != NULL)
 	{	
@@ -1996,16 +1999,34 @@ IplImage* CHandSegment_HMM::kickOneHandAll_whj(IplImage* img, Mat depthMat, CvPo
 		handImg->nChannels);
 
 	//Find the minimum depth 
-	unsigned short miniDepthValue = 5000;
+// 	unsigned short miniDepthValue = 5000;
+// 	for(int y=0; y<handCvRect.height; y++)
+// 	{
+// 		for(int x=0; x<handCvRect.width; x++)
+// 		{
+// 			unsigned short tempDepth = depthMat.at<unsigned short>(y+handCvRect.y,x+handCvRect.x);
+// 			if (tempDepth>0 && tempDepth<miniDepthValue)
+// 			{
+// 				miniDepthValue  = tempDepth;
+// 			}
+// 		}
+// 	}
+
+	//Find the middle depth 
+	double midDepthValue = 0;
+	int nCount = 0;
 	for(int y=0; y<handCvRect.height; y++)
 	{
 		for(int x=0; x<handCvRect.width; x++)
 		{
 			unsigned short tempDepth = depthMat.at<unsigned short>(y+handCvRect.y,x+handCvRect.x);
-			if (tempDepth>0 && tempDepth<miniDepthValue)
+			if (tempDepth > 0)
 			{
-				miniDepthValue  = tempDepth;
+				midDepthValue = midDepthValue + tempDepth;
+				//cout<<tempDepth<<" ";
+				nCount++;
 			}
+
 		}
 	}
 
@@ -2015,7 +2036,7 @@ IplImage* CHandSegment_HMM::kickOneHandAll_whj(IplImage* img, Mat depthMat, CvPo
 		for(int x=0; x<handCvRect.width; x++)
 		{
 			unsigned short tempDepth = depthMat.at<unsigned short>(y+handCvRect.y,x+handCvRect.x);
-			if (tempDepth == 0 || tempDepth > miniDepthValue+200)
+			if (tempDepth == 0 || tempDepth > midDepthValue)
 			{
 				(handImg->imageData + handImg->widthStep*y)[x*3+0] = 0;
 				(handImg->imageData + handImg->widthStep*y)[x*3+1] = 0;

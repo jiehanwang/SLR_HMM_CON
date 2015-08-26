@@ -1212,8 +1212,9 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 
 //进入的原则是：初始状态的概率值大大于一定域值；淘汰的原则是：如果一个词的所有状态均小于域值，该词将从激活表中清除
 //阈值的设定
+//t is the frame ID.
 
-	int v,i;
+	//int v,i;
 	int ict,Icvv;
 	BOOL bActive[MAXWORDNUM];
 
@@ -1222,7 +1223,6 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 	int btemp[MAXWORDNUM];
 	double btemp2[MAXWORDNUM];
 	memset(btemp, 0, MAXWORDNUM*sizeof(int));
-
 	memset(bActive, FALSE, sizeof(BOOL)*MAXWORDNUM);
 
 	if (t == 0) //first frame 选候选词
@@ -1254,7 +1254,7 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 	else
 	{
 		//淘汰
-		for(v=0; v<nWordNum; v++)
+		for(int v=0; v<nWordNum; v++)
 		{
 			int nDiscard = 0;
 			
@@ -1278,7 +1278,7 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 		*Ivc=ict;
 
 		Icvv = 0;
-		for(v=0; v<m_pDhmm->m_nTotalHmmWord; v++)
+		for(int v=0; v<m_pDhmm->m_nTotalHmmWord; v++)
 		{
 			if (!bActive[v])//不是激活的词
 			{
@@ -1311,7 +1311,7 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 
 void CRecognition::Decode(char *result, int *StateSize, int T, Linklists *head)
 {//head 是最后一帧，从后往前走
-	int v,qt,t,fs;
+	int qt,fs;
 	double Amax;
 	int nWordLoc;
 	
@@ -1334,13 +1334,13 @@ void CRecognition::Decode(char *result, int *StateSize, int T, Linklists *head)
 	if (head==NULL)
 		return;
 
-	for(v=0; v<head->nWordNum; v++)
+	for(int v=0; v<head->nWordNum; v++)   //nWordNum: the active number of words on this node
 	{
-		if(head->Score[v][StateSize[head->pWordList[v]]-1] > Amax) 
+		if(head->Score[v][StateSize[head->pWordList[v]]-1] > Amax)   //Score: [nWordNum][StateSize]
 		{
 			Amax = head->Score[v][StateSize[head->pWordList[v]]-1];
-		    qt = v;
-			fs = StateSize[head->pWordList[v]]-1;
+		    qt = v;  //The candidate word with largest score.
+			fs = StateSize[head->pWordList[v]]-1;  //The state number
 		}
 	}//max
 
@@ -1351,18 +1351,17 @@ void CRecognition::Decode(char *result, int *StateSize, int T, Linklists *head)
 	}
 
 	Word[T] = head->pWordList[qt];//最后一个是词qt
-//	fs=StateSize[qt]-1;
+	//fs=StateSize[qt]-1;
 	s=head;
 	//s=head->next; 
-	for(t=T-1; t>0; t--) 
+	for(int t=T-1; t>0; t--) 
 	{
-		nWordLoc = s->Psi[qt][fs];
-
-		fs = s->Fi[qt][fs];
+		nWordLoc = s->Psi[qt][fs]; //Get the previous word ID
+		fs = s->Fi[qt][fs];        //Get the previous state ID
 		qt = nWordLoc;
 
 		s=s->next;
-		Word[t] = s->pWordList[nWordLoc];
+		Word[t] = s->pWordList[nWordLoc]; 
 
 		//cout<<m_pDhmm->m_pHmmWordIndex[Word[t]]->Word<<" ";
 
@@ -1378,16 +1377,16 @@ void CRecognition::Decode(char *result, int *StateSize, int T, Linklists *head)
 			str.Format("%d",qt);
 			AfxMessageBox(str);
 		}*/
-
 	}
 
-///////////////////////////////////////////////////////////////////////////
 	CString strSenBuffer;
 	int indexword=Word[1];
 
 	strSenBuffer = m_pDhmm->m_pHmmWordIndex[indexword]->Word;
 	strSenBuffer += '/';
-	for(t=2; t< T; t++) 
+
+		//Remove the duplicated words.
+	for(int t=2; t< T; t++) 
 	{
 		if(Word[t] != indexword )  
 		{
@@ -1396,26 +1395,6 @@ void CRecognition::Decode(char *result, int *StateSize, int T, Linklists *head)
 			strSenBuffer += '/';
 		}
 	}
-
-// 	CString strWord[75] = {"_1","借帮助","上海市","北京市", "变化2", "承办1", "独立1", "公式2", "合同1", "会议1", "具体1", "模仿1", "模仿2", "入迷1","广泛","力量","人九", "七他", "尽量请",	"主吃","模式一样","具体有","你问号","问号","科技术","要能力","给","交换互相","重要每", "重要各", "人具体","天天气","工作吗","上海市爱","上海市是","需要的","不培养","才大学","能一","吗学","请等","状况识别","请问去","成大家", "下雪吗","会每","人了的","人民才","问想","我们里","有饭","合工作","可以实","能有效","人类等才","错你","了读书","聋人工业","了学", "吗读书", "了大学","与问","和问","里很","你成","人类等了",	"聊天一","聊天每", "市每天","吗权利","能每网","成来","来每个",
-// 	"在每读","在里读"}; 
-// 	CString strCorrWord[75] = {"","应用", "上海","北京","化", "负担","独", "式", "合", "会", "具", "模", "拟", "入","广","努力","人机","其他","尽量使", "主食","模式化","具有","你呢","吗","科技","要努力","赋予", "交互", "重要意义", "重要意义", "人机", "天气","工作了吗","上海市怎么样","上海市现在是","需要社会的","不适应培养","大学","能上","大学","请稍等","表情识别","请你去","谢谢大家", "下雪了吗","会上","人才的","人才","问你想","我们这里","有米饭","合作","可实","可以有效","人类语言","希望你", "大学","哈尔滨工业","大学","大学","大学","和你","和你","我很","你好","人类语言","聊天","聊天","市天","哪些","能上网","好来","来一个",
-// 	"在哪读","在哪读"}; 
-// 
-// 
-// 	for(int i=0; i<75; i++)
-// 	{
-// 
-// 		strSenBuffer.Replace(strWord[i], strCorrWord[i]);
-// 	}
-// 
-// 	CString strNextWord[2] = {"位置", "和(与、同)"};
-// 	CString strNextCorrWord[2]={"在","和"};
-// 	for(int i=0; i<2; i++)
-// 	{
-// 
-// 		strSenBuffer.Replace(strNextWord[i], strNextCorrWord[i]);
-// 	}
 
     strcpy(result, strSenBuffer);
 
@@ -1696,6 +1675,6 @@ void CRecognition::continuous_loop(double *feature, int frameID, char* result)
 
 	if (nFramesNow > 10)
 	{
-		Decode(result, StateSize, nFramesNow, head);
+		Decode(result, StateSize, nFramesNow, head); //StateSize is determined in the function continuous_initial
 	}
 }

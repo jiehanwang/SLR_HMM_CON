@@ -41,5 +41,8 @@ public:
 	void patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDepthData, IplImage* vColorData, int framID, int rankIndex[], int &rankLength);
 	void patchRun_release(void);
 	void patchRun_initial(void);
+	void patchRun_continuous_offline(vector<SLR_ST_Skeleton> vSkeletonData, vector<Mat> vDepthData, 
+		vector<IplImage*> vColorData,int frameNum, char* result);
+	Mat retrieveGrayDepth(Mat depthMat);
 };
 
