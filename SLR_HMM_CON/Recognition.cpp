@@ -877,7 +877,7 @@ Linklists *CRecognition::CreateLists(Linklists *head, int *IndexU,int Vct,
 		temp=(double)-1.e30;
 		iw = ActiveWordList[iv];
 
-		iPreWordLoc = -1;
+		iPreWordLoc = -1;//可能前面没有这个词 iPreWordLoc = -1
 
 		for(int i=0; i< head->nWordNum; i++)
 		{
@@ -887,7 +887,6 @@ Linklists *CRecognition::CreateLists(Linklists *head, int *IndexU,int Vct,
 				break;
 			}
 		}
-		//可能前面没有这个词 iPreWordLoc = -1
 
 		for(int l=0;l<StateSize[iw]; l++)
 		{//每个词的每个状态	
@@ -944,7 +943,6 @@ Linklists *CRecognition::CreateLists(Linklists *head, int *IndexU,int Vct,
 				}
 			}
 			ScoreIntra = temp;
-			
 			
 			/////////////////////
 			//词之间的跳转
@@ -1310,7 +1308,8 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 
 
 void CRecognition::Decode(char *result, int *StateSize, int T, Linklists *head)
-{//head 是最后一帧，从后往前走
+{
+	//head 是最后一帧，从后往前走
 	int qt,fs;
 	double Amax;
 	int nWordLoc;
@@ -1639,6 +1638,8 @@ bool CRecognition::continuous_initial(void)
 	MaxState = m_pDhmm->m_nMaxStateSize;
 
 	head = InitialList(StateSize,MaxState);
+	ivt = 0;
+	ActiveWordNum = 0;
 
 	return true;
 }
@@ -1653,8 +1654,6 @@ void CRecognition::continuous_recog(double *feature, int frameID)
 	head=CreateLists(head, IndexU, ivt, ActiveWordList, ActiveWordNum, 
 		StateSize,MaxState, frameID, feature, NewFirstProb,
 		m_pDhmm->m_nTotalHmmWord, nDimension);
-
-	//return head;
 }
 
 

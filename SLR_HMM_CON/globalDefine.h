@@ -73,5 +73,11 @@ struct ColorModel
 };
 //////////////////////////////////////////////////////////////////////////
 //add after 2015-08-19
-const bool skinHandseg = true;  //true: handSeg. false: noHandSeg
+	//true: handSeg. false: noHandSeg
+const bool skinHandseg = true;  
+	//Save the hand images or not. For debuging.
 const bool saveTempImages = true;
+	//If realOnline is true, the video frames are read one by one. Otherwise, they are read at once.
+const bool realOnline = true;  
+	//true: Hand feature extracted from RGB. false: Hand feature extracted from depth.
+const bool featureFromRGB = true;

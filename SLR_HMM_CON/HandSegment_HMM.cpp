@@ -142,8 +142,10 @@ void CHandSegment_HMM::kickHandsAll(IplImage* rgbImg, Mat mDepth, CvPoint leftPo
 
 	if (skinHandseg)
 	{
-		leftOutputImg =  kickOneHandAll(rgbImg,mDepth,leftPoint,leftHand);
-		rightOutputImg = kickOneHandAll(rgbImg,mDepth,rightPoint,rightHand);
+		//leftOutputImg =  kickOneHandAll(rgbImg,mDepth,leftPoint,leftHand);
+		//rightOutputImg = kickOneHandAll(rgbImg,mDepth,rightPoint,rightHand);
+		leftOutputImg =  kickOneHandAll_yf(rgbImg,mDepth,leftPoint,leftHand);
+		rightOutputImg = kickOneHandAll_yf(rgbImg,mDepth,rightPoint,rightHand);
 	}
 	else
 	{
@@ -158,7 +160,7 @@ void CHandSegment_HMM::kickHandsAll(IplImage* rgbImg, Mat mDepth, CvPoint leftPo
 	}
 	else
 	{
-		posture.leftHandImg = NULL;
+		posture.leftHandImg = NULL; //kickOneHandAll_whj(rgbImg,mDepth,leftPoint,leftHand); //NULL
 	}
 
 	if(rightOutputImg != NULL)
@@ -168,7 +170,7 @@ void CHandSegment_HMM::kickHandsAll(IplImage* rgbImg, Mat mDepth, CvPoint leftPo
 	}
 	else
 	{
-		posture.rightHandImg = NULL;
+		posture.rightHandImg = NULL; //kickOneHandAll_whj(rgbImg,mDepth,rightPoint,rightHand);  //NULL
 	}
 
 	if( leftOutputImg )
@@ -2054,3 +2056,249 @@ IplImage* CHandSegment_HMM::kickOneHandAll_whj(IplImage* img, Mat depthMat, CvPo
 	return handImg;
 }
 
+IplImage* CHandSegment_HMM::kickOneHandAll_yf(IplImage* img, Mat depthMat, CvPoint point,CvRect &HandRegion)
+{
+	int y,x;
+	bool bDepthUsed = true;
+	unsigned short depthValue = depthMat.at<unsigned short>(point.y,point.x);
+	if( 0 == depthValue )
+	{
+		bDepthUsed = false;
+	}
+	int skinWidth = 60;
+	int handWidth = 60;
+	int left,right,top,bottom;
+	left = max(point.x-handWidth,0);
+	top = max(point.y-handWidth,0);
+	right = min(point.x+handWidth, 640);
+	bottom = min(point.y+handWidth,480);
+	CvRect handCvRect = cvRect(left,top,right-left,bottom-top);
+	IplImage *handImg = getROIImage(img,handCvRect);
+
+	unsigned short minDepth = 0xffff;
+	CvPoint minPoint = cvPoint(0,0);
+
+#ifdef OUTPUT_TEMP_IMAGE
+	CString strFlag;
+	strFlag.Format("_%d",flag);
+	IplImage *oriImg1 = cvCreateImage(cvGetSize(handImg),handImg->depth,handImg->nChannels);
+	cvCopy(handImg,oriImg1);
+	cvCircle(oriImg1,cvPoint(handImg->width/2,handImg->height/2),3,cvScalar(0,0,255));
+	cvSaveImage(fileName + "_1_T" + strFlag + ".bmp",oriImg1);
+	cvReleaseImage(&oriImg1);
+	oriImg1 = NULL;
+#endif
+
+	unsigned char r,g,b;
+	double curCr,curCb;
+	double cr,cb;
+
+	//查找肤色部分深度最小值作为估计手部
+	for(y=0; y<handCvRect.height; y++)
+	{
+		for(x=0; x<handCvRect.width; x++)
+		{
+			r = (handImg->imageData + handImg->widthStep*y)[x*3+2];
+			g = (handImg->imageData + handImg->widthStep*y)[x*3+1];
+			b = (handImg->imageData + handImg->widthStep*y)[x*3+0];
+			cr = 0.5000*r - 0.4187*g - 0.0813*b + 128; // cr
+			cb = -0.1687*r - 0.3313*g + 0.5000*b + 128; // cb
+			unsigned short tempDepth = depthMat.at<unsigned short>(y+handCvRect.y,x+handCvRect.x);
+			//if( fabs(faceModel.mean_cr-cr) > 3*faceModel.d_cr ||
+			//	fabs(faceModel.mean_cb-cb) > 3*faceModel.d_cb )
+			if( cb <= 76 || cb >= 128 || cr <= 132 || cr>=174)
+			{
+				(handImg->imageData + handImg->widthStep*y)[x*3+0] = 0;
+				(handImg->imageData + handImg->widthStep*y)[x*3+1] = 0;
+				(handImg->imageData + handImg->widthStep*y)[x*3+2] = 0;
+			}
+			else
+			{
+				if( tempDepth < minDepth && tempDepth != 0 )
+				{
+					minPoint = cvPoint(x,y);
+					minDepth = tempDepth;
+				}
+			}
+		}
+	}
+	cvSaveImage("hand1.jpg",handImg);
+#ifdef OUTPUT_TEMP_IMAGE
+	IplImage *oriImg2= cvCreateImage(cvGetSize(handImg),handImg->depth,handImg->nChannels);
+	cvCopy(handImg,oriImg2);
+	//cvCircle(oriImg2,cvPoint(handImg->width/2,handImg->height/2),1,cvScalar(0,0,255));
+	cvSaveImage(fileName + "_2_skin" + strFlag + ".bmp",oriImg2);
+	cvReleaseImage(&oriImg2);
+	oriImg2 = NULL;
+#endif
+
+	//CString filePath2 = resultDir + m_OniName + "\\temp\\" + fileName + strFlag + "_color_tmep.bmp";
+	//根据深度最小值进行深度限制
+	for(y=0; y<handCvRect.height; y++)
+	{
+		for(x=0; x<handCvRect.width; x++)
+		{
+			unsigned short tempDepth = depthMat.at<unsigned short>(y+handCvRect.y,x+handCvRect.x);
+			if( tempDepth > minDepth + 150 ||  tempDepth==0)
+			{
+				(handImg->imageData + handImg->widthStep*y)[x*3+0] = 0;
+				(handImg->imageData + handImg->widthStep*y)[x*3+1] = 0;
+				(handImg->imageData + handImg->widthStep*y)[x*3+2] = 0;
+			}
+		}
+	}
+	cvSaveImage("hand2.jpg",handImg);
+
+#ifdef OUTPUT_TEMP_IMAGE
+	IplImage *oriImg3= cvCreateImage(cvGetSize(handImg),handImg->depth,handImg->nChannels);
+	cvCopy(handImg,oriImg3);
+	//cvCircle(oriImg3,cvPoint(handImg->width/2,handImg->height/2),1,cvScalar(0,0,255));
+	cvSaveImage(fileName + "_3_skin_depth" + strFlag + ".bmp",oriImg3);
+	cvReleaseImage(&oriImg3);
+	oriImg3 = NULL;
+#endif
+	
+	//CString filePath1 = resultDir + m_OniName + "\\temp\\" + fileName + strFlag + "_temp.bmp";
+
+	//获得肤色检测的最大连通域，求取该连通域中的最小深度，作为估计的手部
+	IplImage *biImg = cvCreateImage(cvGetSize(handImg),8,1);
+	cvCvtColor(handImg,biImg,CV_BGR2GRAY);
+	cvThreshold(biImg,biImg,0,255,CV_THRESH_BINARY);
+
+	cvErode(biImg,biImg,NULL,1);
+	cvDilate(biImg,biImg,NULL,1);
+
+	IplImage* resultImg = getConnexeImage(biImg);
+
+	double minDepth2 = 0xffff;
+	CvPoint minPoint2 = cvPoint(0,0);
+	for(y=0; y<resultImg->height; y++)
+	{
+		for(x=0; x<resultImg->width; x++)
+		{
+			if( (resultImg->imageData + resultImg->widthStep*y)[x] == 0)
+			{
+				(handImg->imageData + handImg->widthStep*y)[x*3+0] = 0;
+				(handImg->imageData + handImg->widthStep*y)[x*3+1] = 0;
+				(handImg->imageData + handImg->widthStep*y)[x*3+2] = 0;
+			}
+			else
+			{
+				unsigned short tempDepth = depthMat.at<unsigned short>(y+handCvRect.y,x+handCvRect.x);
+				if( tempDepth < minDepth2 && tempDepth != 0 )
+				{
+					minPoint2 = cvPoint(x,y);
+					minDepth2 = tempDepth;
+				}
+			}
+		}
+	}
+	cvReleaseImage(&biImg);
+	cvReleaseImage(&resultImg);
+	cvSaveImage("hand3.jpg",handImg);
+	//根据检测到的手部，更新肤色模型，确定手部的位置minPoint
+	ColorModel colorModel;
+	getColorModel(handImg,colorModel);
+	if(colorModel.mean_cb == 0)
+	{
+		colorModel.mean_cb = faceModel.mean_cb;
+		colorModel.mean_cr = faceModel.mean_cr;
+		colorModel.d_cb = faceModel.d_cb;
+		colorModel.d_cr = faceModel.d_cr;
+
+		minPoint = cvPoint(point.x-handCvRect.x, point.y-handCvRect.y);
+		return NULL;
+	}
+	else if(minDepth2 != 0xffff)
+	{
+		minDepth = minDepth2;
+		minPoint = minPoint2;
+	}
+
+	CvPoint outPoint = cvPoint(handCvRect.x+minPoint.x, handCvRect.y+minPoint.y);
+
+	unsigned char c_r,c_g,c_b;
+	c_r = (handImg->imageData + handImg->widthStep*minPoint.y)[minPoint.x*3+2];
+	c_g = (handImg->imageData + handImg->widthStep*minPoint.y)[minPoint.x*3+1];
+	c_b = (handImg->imageData + handImg->widthStep*minPoint.y)[minPoint.x*3+0]; 
+	double m_cr,m_cb;
+	m_cr = 0.5000*c_r - 0.4187*c_g - 0.0813*c_b + 128; // cr
+	m_cb = -0.1687*c_r - 0.3313*c_g + 0.5000*c_b + 128; // cb
+
+
+#ifdef OUTPUT_TEMP_IMAGE
+	IplImage *oriImg4= cvCreateImage(cvGetSize(handImg),handImg->depth,handImg->nChannels);
+	cvCopy(handImg,oriImg4);
+	cvCircle(oriImg4,cvPoint(handImg->width/2,handImg->height/2),3,cvScalar(0,0,255));
+	cvSaveImage(fileName + "_4_point" + strFlag + ".bmp",oriImg4);
+	cvReleaseImage(&oriImg4);
+	oriImg4 = NULL;
+#endif
+	
+#ifdef OUTPUT_TEMP_IMAGE
+		IplImage *oriImg5= cvCreateImage(cvGetSize(handImg),handImg->depth,handImg->nChannels);
+		cvCopy(handImg,oriImg5);
+		//cvCircle(oriImg3,cvPoint(handImg->width/2,handImg->height/2),1,cvScalar(0,0,255));
+		cvSaveImage(fileName + "_5_skin_depth" + strFlag + ".bmp",oriImg5);
+		cvReleaseImage(&oriImg5);
+		oriImg5 = NULL;
+#endif
+	cvSaveImage("hand5.jpg",handImg);
+	IplImage *binaryImg = cvCreateImage(cvSize(handImg->width,handImg->height),8,1);
+	IplImage *tempBinImg = cvCreateImage(cvGetSize(binaryImg),8,1);
+	cvCvtColor(handImg,binaryImg,CV_BGR2GRAY);
+	cvThreshold(binaryImg,binaryImg,0,255,CV_THRESH_BINARY);
+	cvCopy(binaryImg,tempBinImg);
+
+	cvReleaseImage(&binaryImg);
+	binaryImg = cvCreateImage(cvGetSize(handImg),8,1);
+	cvCopy(tempBinImg,binaryImg);
+	cvReleaseImage(&tempBinImg);
+	cvSaveImage("hand6.jpg",handImg);
+	int *theBox = new int[4];
+	int *theCent = new int[2];
+	int nThreshold = 30;
+	int nMaxRect = 0;
+	
+	//进行膨胀腐蚀操作，去除边缘信息
+	IplConvKernel *strel = cvCreateStructuringElementEx(5,5,2,2,CV_SHAPE_CROSS);
+	cvErode(binaryImg,binaryImg,strel,1);
+	cvDilate(binaryImg,binaryImg,strel,1);
+	cvReleaseStructuringElement(&strel);
+
+	//获得最大连通域，即分割后的手部
+	getConnexeCenterBox(binaryImg,nMaxRect,theCent,theBox,nThreshold);
+	IplImage *outputImg = NULL;
+	if(nMaxRect > 0)
+	{
+		CvPoint lt = cvPoint(theBox[0],theBox[1]);
+		CvPoint rb = cvPoint(theBox[2],theBox[3]);
+
+		cvReleaseImage(&handImg);
+		handImg =getROIImage(img,handCvRect);
+
+#ifndef GrayHandImage
+		getForeImage(handImg,binaryImg);
+#endif
+		outputImg = getROIImage(handImg,cvRect(theBox[0],theBox[1],theBox[2]-theBox[0],theBox[3]-theBox[1]));
+
+		HandRegion.x = handCvRect.x + theBox[0];
+		HandRegion.y = handCvRect.y + theBox[1];
+		HandRegion.width = theBox[2]-theBox[0];
+		HandRegion.height = theBox[3]-theBox[1];
+
+	}
+	cvSaveImage("hand7.jpg",handImg);
+	delete [] theBox;
+	delete [] theCent;
+	cvReleaseImage(&handImg);
+	cvReleaseImage(&binaryImg);
+
+
+#ifdef OUTPUT_TEMP_IMAGE
+	cvSaveImage(fileName + "_6_result" + strFlag + ".bmp",outputImg);
+#endif
+
+
+	return outputImg;
+}

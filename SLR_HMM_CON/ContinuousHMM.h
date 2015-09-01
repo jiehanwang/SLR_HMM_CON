@@ -22,8 +22,9 @@ public:
 	CString modelPath;
 
 	CvPoint headPoint, lPoint2, rPoint2;
-	vector<Posture> vPosture;
-	vector<SLR_ST_Skeleton> vSkeleton;
+	vector<Posture>         vPosture;         //Record hand postures from each frames. 
+	vector<SLR_ST_Skeleton> vSkeleton;        //Record skeletons from each frames. 
+
 	vector<int> frameSelect;
 	bool frameSelected;
 	int usefulFrameSize;

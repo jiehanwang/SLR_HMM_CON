@@ -105,45 +105,51 @@ void ContinuousHMM::readIndata(SLR_ST_Skeleton skeletonCurrent, Mat depthCurrent
 			handSegmentVideo.getFaceNeckRegion(frameCurrent,depthCurrent);
 			handSegmentVideo.copyDepthMat(depthCurrent.clone());
 		}
+		else
+		{
+			cout<<"Face is not detected!!!"<<endl;
+		}
 	}
 
-
-	//if (frameSelect[framID] == 1)
+	//Frame selection is closed in the on-line continuous SLR. 
+	//Therefore, the following code is commented. 
+	//if (frameSelect[framID] == 1)   
 	{
 		vSkeleton.push_back(skeletonCurrent);
 
-
 		Posture posture;
-
 		lPoint2.x = skeletonCurrent._2dPoint[7].x;
 		lPoint2.y = skeletonCurrent._2dPoint[7].y;
-
 		rPoint2.x = skeletonCurrent._2dPoint[11].x;
 		rPoint2.y = skeletonCurrent._2dPoint[11].y;
 
 		CvRect leftHand;
 		CvRect rightHand;
 
-		//Feature extracted from RGB
-		handSegmentVideo.kickHandsAll(frameCurrent,depthCurrent
-			,lPoint2,rPoint2,posture,leftHand,rightHand);
-
-		//Feature extracted from Depth
-// 		Mat tempMat = retrieveGrayDepth(depthCurrent);
-// 		IplImage depthGray = IplImage(tempMat);
-// 		handSegmentVideo.kickHandsAll(&depthGray,depthCurrent
-// 			,lPoint2,rPoint2,posture,leftHand,rightHand);
+		if (featureFromRGB)
+		{
+			//Feature extracted from RGB
+			handSegmentVideo.kickHandsAll(frameCurrent,depthCurrent
+				,lPoint2,rPoint2,posture,leftHand,rightHand);
+		}
+		else
+		{
+			//Feature extracted from Depth
+			Mat tempMat = retrieveGrayDepth(depthCurrent);
+			IplImage depthGray = IplImage(tempMat);
+			handSegmentVideo.kickHandsAll(&depthGray,depthCurrent
+				,lPoint2,rPoint2,posture,leftHand,rightHand);
+		}
 
 		if (saveTempImages)
 		{
 			CString outputName;
-			outputName.Format("..\\output\\%03d_left.jpg", framID);
+			outputName.Format("..\\output\\images\\%03d_left.jpg", framID);
 			cvSaveImage(outputName, posture.leftHandImg);
-			outputName.Format("..\\output\\%03d_right.jpg", framID);
+			outputName.Format("..\\output\\images\\%03d_right.jpg", framID);
 			cvSaveImage(outputName, posture.rightHandImg);
 		}
 		
-
 		vPosture.push_back(posture);
 	}
 }
@@ -279,6 +285,8 @@ void ContinuousHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDept
 {
 	//Read in data of one frame to this class
 	readIndata(vSkeletonData, vDepthData, vColorData, framID);
+	//The vPosture and vSkeleton have been computed 
+
 	//Compute the feature. The size of the frame is only 1.
 	myFeaExtraction.postureFeature(vPosture,handSegmentVideo);
 	myFeaExtraction.SPFeature(vSkeleton);
@@ -293,30 +301,12 @@ void ContinuousHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDept
 	for (int i=0; i<nWord; i++)
 	{
 		CString strTemp = str.Mid(i*6+1, 4);
-		//cout<<strTemp<<endl;
 		int iWord = _ttoi(strTemp);
 		rankIndex[i] = iWord;
-		//cout<<iWord<<endl;
 	}
 	rankLength = nWord;
 
-
-	//cout<<str<<endl;
-// 	str.Compare("s");
-// 	for (int i=0; i<str.GetLength(); i++)
-// 	{
-// 		CString oneStr(str.GetAt(i));
-// 		if (oneStr.Compare("w"))
-// 		{
-// 			CString strTemp;
-// 			strTemp = str.Mid(i,4);
-// 			cout<<strTemp<<endl;
-// 		}
-// 	}
-
-
-	//////////////////////////////////////////////////////////////////////////
-
+	//Release the resource of the current frame
 	myFeaExtraction.release();
 	for (int i=0; i<vPosture.size(); i++)
 	{
@@ -345,5 +335,6 @@ void ContinuousHMM::patchRun_release(void)
 void ContinuousHMM::patchRun_initial(void)
 {
 	m_pRecog->continuous_initial();
-	resWord[0] = 0;
+	//resWord[0] = 0;
+	memset(resWord,0,500);
 }
