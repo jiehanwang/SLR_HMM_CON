@@ -6,9 +6,10 @@ ContinuousHMM::ContinuousHMM(void)
 {
 	m_pDhmm_test = new CHMM;
 
+	groundtruthFile = "..\\input\\sentences_YF.txt";
 	if (skinHandseg)
 	{
-		ReadGallery("..\\model\\HmmData_signFromSentence_370sign_withoutP0805.dat");
+		ReadGallery("..\\model\\HmmData_signFromSentence_370sign_withoutP0805_YF_0914.dat");
 	}
 	else
 	{
@@ -298,11 +299,13 @@ void ContinuousHMM::patchRun_continuous(SLR_ST_Skeleton vSkeletonData, Mat vDept
 	CString str(resWord);
 	int strLength = str.GetLength();
 	int nWord = strLength/6;
+	vector<int> recognizeList;
 	for (int i=0; i<nWord; i++)
 	{
 		CString strTemp = str.Mid(i*6+1, 4);
 		int iWord = _ttoi(strTemp);
 		rankIndex[i] = iWord;
+		recognizeList.push_back(iWord);
 	}
 	rankLength = nWord;
 
@@ -337,4 +340,118 @@ void ContinuousHMM::patchRun_initial(void)
 	m_pRecog->continuous_initial();
 	//resWord[0] = 0;
 	memset(resWord,0,500);
+	loadGroundTruthAll(groundTruthAll);
+}
+
+
+int ContinuousHMM::editDistance(vector<int> recognizeList, vector<int> groundtruthList)
+{
+	int m = groundtruthList.size();
+	int n = recognizeList.size();
+
+	//To realize "d = toeplitz(1:n1+1,1:n2+1)-1;" in Matlab
+	vector<vector<int>> d;
+	for (int i=0; i<m+1; i++)
+	{
+		vector<int> temp;
+		for (int j=0; j<n+1; j++)
+		{
+			if(i<j)
+			{
+				temp.push_back(j-i);
+			}
+			else if (i==j)
+			{
+				temp.push_back(0);
+			}
+			else
+			{
+				temp.push_back(i-j);
+			}
+		}
+		d.push_back(temp);
+	}
+
+	for (int j=0; j<n; j++)
+	{
+		for (int i=0; i<m; i++)
+		{
+			int ne = 0;
+			if (groundtruthList[i] == recognizeList[j])
+			{
+				ne = 0;
+			}
+			else
+			{
+				ne = 1;
+			}
+			d[i+1][j+1] = min(min(d[i][j+1], d[i+1][j])+1, d[i][j]+ne);
+		}
+	}
+
+	return d[m][n];
+}
+
+void ContinuousHMM::readstr(FILE *f,char *string)
+{
+	do
+	{
+		fgets(string, 255, f);
+	} while ((string[0] == '/') || (string[0] == '\n'));
+	return;
+}
+
+void ContinuousHMM::loadGroundTruthAll(vector<vector<int>> &groundTruthAll)
+{
+	ifstream ifr(groundtruthFile, ios::in);
+
+	char oneline[255];
+	int nLine;
+	FILE *filein;
+	filein = fopen(groundtruthFile, "rt");
+
+	readstr(filein, oneline);
+	sscanf(oneline, "LINE %d\n", &nLine);
+
+	for (int i=0; i<nLine; i++)
+	{
+		readstr(filein, oneline);
+		char* sp = oneline; 
+		int num; 
+		int read; 
+		vector<int> temp;
+		while( sscanf(sp, "%d %n", &num, &read)!=EOF ){ 
+			//cout<<num<<" ";
+			temp.push_back(num);
+			sp += read-1; 
+		}
+		groundTruthAll.push_back(temp);
+	}
+}
+
+
+vector<int> ContinuousHMM::addLanguageModel(int rankIndex[], int rankLength)
+{
+	vector<int> result;
+	vector<int> recognizeList;
+ 	for (int i=0; i<rankLength; i++)
+	{
+		recognizeList.push_back(rankIndex[i]);
+	}
+
+	int nSampleGroundtruth = groundTruthAll.size();
+	int diff = 10000;
+	int chooseSen = -1;
+	for (int i=0; i<nSampleGroundtruth; i++)
+	{
+		vector<int> groundCurrent = groundTruthAll[i];
+		if (editDistance(recognizeList, groundCurrent) < diff)
+		{
+			diff = editDistance(recognizeList, groundCurrent);
+			chooseSen = i;
+		}
+	}
+
+	result = groundTruthAll[chooseSen];
+	return result;
 }

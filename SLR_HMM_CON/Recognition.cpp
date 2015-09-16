@@ -1197,7 +1197,7 @@ Linklists *CRecognition::ContinuostRecog_Whj(double **feature,int frames)
 
 
 
-#define ACTIVE_VALUE 0//0.12
+#define ACTIVE_VALUE 1.2e+5//0//0.12
 void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 							int *Ivc, double* NewFirstProb,
 						  int t,int *ActiveWordList,int *ActiveWordNum,int *StateSize)
@@ -1256,11 +1256,14 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 		{
 			int nDiscard = 0;
 			
+			//cout<<"word: "<<v;
 			for(int j =0; j< StateSize[head->pWordList[v]]; j++)
 			{
+				//cout<<" state: "<<j<<" "<<head->Score[v][j]<<" ";
 				if(head->Score[v][j] < head->BeamThreshold) 
 					nDiscard++;
 			}
+			//cout<<endl;
 			
 			if(nDiscard != StateSize[head->pWordList[v]])
 			{
@@ -1282,6 +1285,7 @@ void CRecognition::PreSlectCandidate(Linklists *head,double *data,int *IndexU,
 			{
 				CalculateFirstState(data, &NewFirstProb[Icvv], v, DIMENSION);
 				//增加前300个
+				//cout<<"Active_value: "<<NewFirstProb[Icvv]<<endl;
 				if(NewFirstProb[Icvv] > ACTIVE_VALUE)//如何设置这个值
 				{
 					ActiveWordList[Icvv++] = v;
@@ -1342,7 +1346,7 @@ void CRecognition::Decode(char *result, int *StateSize, int T, Linklists *head)
 			fs = StateSize[head->pWordList[v]]-1;  //The state number
 		}
 	}//max
-
+	//cout<<"Amax: "<<Amax/nFramesNow<<" fs: "<<nFramesNow<<endl;
 	if(fs==0) 
 	{
 	   AfxMessageBox("Decoding Error");
@@ -1670,6 +1674,9 @@ void CRecognition::continuous_release(void)
 void CRecognition::continuous_loop(double *feature, int frameID, char* result)
 {
 	nFramesNow++;
+	//Add by whj
+	head->BeamThreshold = 0;
+
 	continuous_recog(feature, frameID);
 
 	if (nFramesNow > 10)

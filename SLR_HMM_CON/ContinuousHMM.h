@@ -4,6 +4,7 @@
 #include <opencv2\opencv.hpp>
 #include "S_FeaExtraction.h"
 #include "globalDefine.h"
+#include <fstream>
 using namespace std;
 using namespace cv;
 
@@ -31,6 +32,9 @@ public:
 	int heightLimit;
 	char resWord[500];
 
+	CString groundtruthFile;
+	vector<vector<int>> groundTruthAll;
+
 	void loadModel(CString path);
 	void run(double **feature, int frameNum, char* result);
 	void frameSelect_inMatch(int heightLimit, int leftY, int rightY);
@@ -45,5 +49,9 @@ public:
 	void patchRun_continuous_offline(vector<SLR_ST_Skeleton> vSkeletonData, vector<Mat> vDepthData, 
 		vector<IplImage*> vColorData,int frameNum, char* result);
 	Mat retrieveGrayDepth(Mat depthMat);
+	int editDistance(vector<int> recognizeList, vector<int> groundtruthList);
+	void readstr(FILE *f,char *string);
+	void loadGroundTruthAll(vector<vector<int>> &groundTruthAll);
+	vector<int> addLanguageModel(int rankIndex[], int rankLength);
 };
 

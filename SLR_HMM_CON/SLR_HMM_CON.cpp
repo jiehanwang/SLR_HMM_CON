@@ -14,7 +14,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	bool fileFindFlag;
 	CFileFind fileFind;
 	CString normFileName;
-	normFileName.Format("E:\\continuousDemoSign4test\\p08_05\\*.oni");
+	normFileName.Format("E:\\sentence_yf\\P05\\*.oni");
 	fileFindFlag = true;
 	fileFindFlag = fileFind.FindFile(normFileName);
 
@@ -66,11 +66,19 @@ int _tmain(int argc, _TCHAR* argv[])
 				cout<<endl;
 			}
 
+			vector<int> result;
+			result = myMatching.addLanguageModel(rankIndex,rankLength);
+
 			//Output the results to the saved files
 			outfile.open("..\\output\\result.txt",ios::out | ios::app);
 			for (int i=0; i<rankLength; i++)
 			{
 				outfile<<rankIndex[i]<<" ";
+			}
+			outfile<<'\t';
+			for (int i=0; i<result.size(); i++)
+			{
+				outfile<<result[i]<<" ";
 			}
 			outfile<<endl;
 			outfile.close();
